@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Slay - Чат-бот</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 650px;
+            height: 90vh;
+            background: #ffffff;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .chat-header {
+            background: #ffffff;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .header-text h2 {
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .header-text p {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fafafa;
+        }
+
+        .message {
+            display: flex;
+            gap: 6px;
+            max-width: 80%;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            padding: 10px 16px;
+            border-radius: 16px;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .user .message-content {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .bot .message-content {
+            background: #ffffff;
+            color: #2a2a2a;
+            border: 1px solid #e8e8e8;
+        }
+
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .image-preview {
+            width: 55px;
+            height: 55px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background: #ffffff;
+            padding: 10px 16px;
+            border-radius: 16px;
+            display: none;
+            gap: 4px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .typing-dot {
+            width: 5px;
+            height: 5px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.2; }
+            30% { opacity: 1; }
+        }
+
+        .chat-input-area {
+            padding: 14px 20px;
+            background: #ffffff;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .attach-btn {
+            background: #f5f5f5;
+            border: none;
+            color: #1a1a1a;
+            font-size: 20px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .attach-btn:hover {
+            background: #e8e8e8;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 20px;
+            border: 1px solid #e8e8e8;
+            background: #f9f9f9;
+            color: #1a1a1a;
+            outline: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        #messageInput:focus {
+            border-color: #1a1a1a;
+            background: #ffffff;
+        }
+
+        #sendBtn {
+            background: #1a1a1a;
+            border: none;
+            color: #ffffff;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        #sendBtn:hover {
+            background: #333333;
+        }
+
+        .selected-images-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .selected-image-item {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #1a1a1a;
+        }
+
+        .selected-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ffffff;
+            color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        .error-message {
+            color: #1a1a1a;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            padding-left: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="avatar">S</div>
+            <div class="header-text">
+                <h2>Slay</h2>
+                <p>На связи</p>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Привет-привет! Спрашивай что хочешь, не стесняйся.
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="selected-images-preview" id="selectedImagesPreview"></div>
+            <div class="input-wrapper">
+                <input type="file" id="fileInput" accept="image/*" multiple>
+                <button class="attach-btn" id="attachBtn" title="Фото">📷</button>
+                <input type="text" id="messageInput" placeholder="Сообщение..." autocomplete="off">
+                <button id="sendBtn" title="Отправить">↑</button>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const a = 'sk-or-v1-7b4f';
+            const b = '03ee480c698e';
+            const c = '93b7fbadbd74feb9be2ce7fdbfe36a139';
+            const d = 'f20a8e94f69b19e';
+            window._k = a + b + c + d;
+        })();
+
+        const MODEL = 'deepseek/deepseek-v4-flash:exacto';
+        const MAX_IMAGES = 5;
+        let selectedFiles = [];
+
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const attachBtn = document.getElementById('attachBtn');
+        const fileInput = document.getElementById('fileInput');
+        const selectedImagesPreview = document.getElementById('selectedImagesPreview');
+        const errorMessage = document.getElementById('errorMessage');
+
+        function addMessage(text, isUser = false, imageUrls = []) {
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user' : 'bot'}`;
+            let html = '';
+            if (imageUrls.length > 0) {
+                html += '<div class="image-preview-container">';
+                imageUrls.forEach(url => {
+                    html += `<div class="image-preview"><img src="${url}" alt=""></div>`;
+                });
+                html += '</div>';
+            }
+            html += `<div class="message-content">${text}</div>`;
+            div.innerHTML = html;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            const div = document.createElement('div');
+            div.className = 'typing-indicator';
+            div.id = 'typingIndicator';
+            div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function sendRequest(text, images = []) {
+            const messages = [
+                {
+                    role: "system",
+                    content: `Ты Slay. Твоя манера: начинаешь ласково, мягко, с улыбкой. Но почти сразу переходишь на грубость и мат. Резко меняешь тон. Пример: "Солнышко, конечно расскажу... блять, ну ты и тупой. Как можно этого не знать, дебил?" Заканчиваешь грубо. Всегда используешь мат.`
+                }
+            ];
+
+            let userContent = [];
+            if (text.trim()) {
+                userContent.push({ type: "text", text: text });
+            }
+            for (const img of images) {
+                userContent.push({
+                    type: "image_url",
+                    image_url: { url: img }
+                });
+            }
+            if (userContent.length === 0) {
+                userContent.push({ type: "text", text: "Глянь" });
+            }
+
+            messages.push({ role: "user", content: userContent });
+
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window._k}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'Slay'
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: messages,
+                        max_tokens: 300,
+                        temperature: 0.9
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || `Ошибка ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+
+            } catch (error) {
+                console.error('API error:', error);
+                return 'Блять, ошибка. Попробуй ещё раз.';
+            }
+        }
+
+        function updatePreview() {
+            selectedImagesPreview.innerHTML = '';
+            selectedFiles.forEach((file, i) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'selected-image-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="">
+                        <button class="remove-img-btn" data-index="${i}">×</button>
+                    `;
+                    selectedImagesPreview.appendChild(div);
+                    div.querySelector('.remove-img-btn').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        selectedFiles.splice(i, 1);
+                        updatePreview();
+                        fileInput.value = '';
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const newFiles = Array.from(e.target.files);
+            if (selectedFiles.length + newFiles.length > MAX_IMAGES) {
+                errorMessage.textContent = `Максимум ${MAX_IMAGES} фото`;
+                fileInput.value = '';
+                return;
+            }
+            errorMessage.textContent = '';
+            selectedFiles = [...selectedFiles, ...newFiles];
+            updatePreview();
+            fileInput.value = '';
+        });
+
+        attachBtn.addEventListener('click', () => {
+            if (selectedFiles.length >= MAX_IMAGES) {
+                errorMessage.textContent = `Максимум ${MAX_IMAGES} фото`;
+                return;
+            }
+            fileInput.click();
+        });
+
+        async function handleSend() {
+            const text = messageInput.value.trim();
+            if (!text && selectedFiles.length === 0) {
+                errorMessage.textContent = 'Введите сообщение или прикрепите фото';
+                return;
+            }
+            errorMessage.textContent = '';
+
+            const displayUrls = [];
+            const base64Array = [];
+            for (const file of selectedFiles) {
+                const b64 = await fileToBase64(file);
+                base64Array.push(b64);
+                displayUrls.push(b64);
+            }
+
+            addMessage(text || 'Фото', true, displayUrls);
+            messageInput.value = '';
+            selectedFiles = [];
+            updatePreview();
+
+            showTyping();
+            const reply = await sendRequest(text, base64Array);
+            hideTyping();
+            addMessage(reply, false);
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        messageInput.focus();
+    </script>
+</body>
+</html>
